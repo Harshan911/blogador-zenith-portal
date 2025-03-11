@@ -1,64 +1,169 @@
 
-import React, { useRef } from 'react';
-import { Editor } from '@tinymce/tinymce-react';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Link from '@tiptap/extension-link';
+import Image from '@tiptap/extension-image';
+import Placeholder from '@tiptap/extension-placeholder';
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
+import { common, createLowlight } from 'lowlight';
+import { Button } from './ui/button';
+import {
+  Bold,
+  Italic,
+  List,
+  ListOrdered,
+  Link as LinkIcon,
+  Image as ImageIcon,
+  Code,
+  Quote,
+  Undo,
+  Redo,
+} from 'lucide-react';
+
+const lowlight = createLowlight(common);
 
 interface RichTextEditorProps {
   value: string;
   onChange: (content: string) => void;
-  height?: number;
   placeholder?: string;
 }
 
-const RichTextEditor: React.FC<RichTextEditorProps> = ({ 
-  value, 
-  onChange, 
-  height = 500,
-  placeholder = 'Write your content here...'
-}) => {
-  const editorRef = useRef<any>(null);
+const RichTextEditor = ({ value, onChange, placeholder = 'Write your content here...' }: RichTextEditorProps) => {
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: {
+          class: 'text-primary underline',
+        },
+      }),
+      Image.configure({
+        HTMLAttributes: {
+          class: 'max-w-full rounded-lg my-4',
+        },
+      }),
+      Placeholder.configure({
+        placeholder,
+      }),
+      CodeBlockLowlight.configure({
+        lowlight,
+      }),
+    ],
+    content: value,
+    onUpdate: ({ editor }) => {
+      onChange(editor.getHTML());
+    },
+  });
+
+  if (!editor) {
+    return null;
+  }
+
+  const addImage = () => {
+    const url = window.prompt('Enter image URL');
+    if (url) {
+      editor.chain().focus().setImage({ src: url }).run();
+    }
+  };
+
+  const addLink = () => {
+    const url = window.prompt('Enter URL');
+    if (url) {
+      editor.chain().focus().setLink({ href: url }).run();
+    }
+  };
 
   return (
-    <Editor
-      apiKey="no-api-key" // For production, you should register for an API key at https://www.tiny.cloud/
-      onInit={(evt, editor) => editorRef.current = editor}
-      initialValue={value}
-      value={value}
-      onEditorChange={(newValue) => onChange(newValue)}
-      init={{
-        height,
-        menubar: true,
-        plugins: [
-          'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
-          'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
-          'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount',
-          'emoticons', 'codesample'
-        ],
-        toolbar: 'undo redo | blocks | ' +
-          'bold italic forecolor | alignleft aligncenter ' +
-          'alignright alignjustify | bullist numlist outdent indent | ' +
-          'removeformat | link image media codesample | code fullscreen',
-        content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
-        placeholder: placeholder,
-        images_upload_handler: (blobInfo, progress) => new Promise((resolve, reject) => {
-          // In a real application, you would upload to your server or a third-party service
-          // For this demo, we'll create a data URL
-          const reader = new FileReader();
-          reader.onload = () => {
-            resolve(reader.result as string);
-          };
-          reader.onerror = () => reject('Image upload failed');
-          reader.readAsDataURL(blobInfo.blob());
-        }),
-        link_default_target: '_blank',
-        link_title: true,
-        link_assume_external_targets: true,
-        relative_urls: false,
-        remove_script_host: false,
-        convert_urls: true,
-        branding: false,
-        entity_encoding: 'raw'
-      }}
-    />
+    <div className="border border-input rounded-lg overflow-hidden">
+      <div className="bg-muted/50 p-2 border-b border-input flex flex-wrap gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          className={editor.isActive('bold') ? 'bg-muted' : ''}
+        >
+          <Bold className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          className={editor.isActive('italic') ? 'bg-muted' : ''}
+        >
+          <Italic className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          className={editor.isActive('bulletList') ? 'bg-muted' : ''}
+        >
+          <List className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          className={editor.isActive('orderedList') ? 'bg-muted' : ''}
+        >
+          <ListOrdered className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+          className={editor.isActive('codeBlock') ? 'bg-muted' : ''}
+        >
+          <Code className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+          className={editor.isActive('blockquote') ? 'bg-muted' : ''}
+        >
+          <Quote className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={addLink}
+          className={editor.isActive('link') ? 'bg-muted' : ''}
+        >
+          <LinkIcon className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={addImage}
+        >
+          <ImageIcon className="h-4 w-4" />
+        </Button>
+        <div className="border-l border-input mx-2" />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => editor.chain().focus().undo().run()}
+          disabled={!editor.can().undo()}
+        >
+          <Undo className="h-4 w-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => editor.chain().focus().redo().run()}
+          disabled={!editor.can().redo()}
+        >
+          <Redo className="h-4 w-4" />
+        </Button>
+      </div>
+      
+      <EditorContent 
+        editor={editor} 
+        className="prose prose-sm max-w-none p-4 min-h-[400px] focus:outline-none"
+      />
+    </div>
   );
 };
 
