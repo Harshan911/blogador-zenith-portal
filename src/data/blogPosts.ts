@@ -7,6 +7,12 @@ export interface BlogPost {
   slug: string;
   readTime: number;
   bannerImage?: string;
+  keywords?: string[];
+  authorName?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  isPublished?: boolean;
+  lastModified?: string;
 }
 
 // Sample blog posts data
@@ -18,7 +24,11 @@ export const blogPosts: BlogPost[] = [
     date: "2024-02-20",
     slug: "getting-started-with-react",
     readTime: 5,
-    bannerImage: "https://images.unsplash.com/photo-1633356122102-3fe601e05bd2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80"
+    bannerImage: "https://images.unsplash.com/photo-1633356122102-3fe601e05bd2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80",
+    keywords: ["react", "javascript", "web development"],
+    authorName: "Admin User",
+    isPublished: true,
+    lastModified: "2024-02-20"
   },
   {
     title: "Understanding TypeScript",
@@ -27,7 +37,11 @@ export const blogPosts: BlogPost[] = [
     date: "2024-02-19",
     slug: "understanding-typescript",
     readTime: 7,
-    bannerImage: "https://images.unsplash.com/photo-1600267204048-88953d381b96?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80"
+    bannerImage: "https://images.unsplash.com/photo-1600267204048-88953d381b96?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1470&q=80",
+    keywords: ["typescript", "javascript", "programming"],
+    authorName: "Admin User",
+    isPublished: true,
+    lastModified: "2024-02-19"
   }
 ];
 
@@ -39,4 +53,45 @@ export const getAllBlogPosts = (): BlogPost[] => {
 // Function to get a blog post by slug
 export const getBlogPostBySlug = (slug: string): BlogPost | undefined => {
   return blogPosts.find(post => post.slug === slug);
+};
+
+// New helper functions for blog management
+
+// Function to add a new blog post
+export const addBlogPost = (post: BlogPost): void => {
+  blogPosts.unshift(post);
+};
+
+// Function to update an existing blog post
+export const updateBlogPost = (updatedPost: BlogPost): boolean => {
+  const index = blogPosts.findIndex(post => post.slug === updatedPost.slug);
+  if (index !== -1) {
+    blogPosts[index] = {
+      ...updatedPost,
+      lastModified: new Date().toISOString().split('T')[0]
+    };
+    return true;
+  }
+  return false;
+};
+
+// Function to delete a blog post
+export const deleteBlogPost = (slug: string): boolean => {
+  const index = blogPosts.findIndex(post => post.slug === slug);
+  if (index !== -1) {
+    blogPosts.splice(index, 1);
+    return true;
+  }
+  return false;
+};
+
+// Function to search blog posts
+export const searchBlogPosts = (query: string): BlogPost[] => {
+  const lowerCaseQuery = query.toLowerCase();
+  return blogPosts.filter(post => 
+    post.title.toLowerCase().includes(lowerCaseQuery) || 
+    post.content.toLowerCase().includes(lowerCaseQuery) ||
+    post.excerpt.toLowerCase().includes(lowerCaseQuery) ||
+    post.keywords?.some(keyword => keyword.toLowerCase().includes(lowerCaseQuery))
+  );
 };
