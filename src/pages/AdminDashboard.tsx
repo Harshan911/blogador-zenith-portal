@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Edit, Trash2, Plus, Search } from 'lucide-react';
-import { getAllBlogPosts, BlogPost } from '../data/blogPosts';
+import { getAllBlogPosts, BlogPost, deleteBlogPost } from '../data/blogPosts';
 import { useToast } from "@/hooks/use-toast";
 
 const AdminDashboard = () => {
@@ -44,7 +44,10 @@ const AdminDashboard = () => {
   const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
 
   const handleDelete = (slug: string) => {
-    // In a real app, this would make an API call to delete the post
+    // Delete the post
+    deleteBlogPost(slug);
+    
+    // Update the local state
     setPosts(posts.filter(post => post.slug !== slug));
     
     toast({
