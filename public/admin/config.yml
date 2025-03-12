@@ -1,0 +1,37 @@
+
+backend:
+  name: git-gateway
+  branch: main # Branch to update (optional; defaults to master)
+
+# This line should match your site URL
+site_url: https://your-blog-site.netlify.app
+
+# When using the GitHub backend, this is used for authentication
+# With git-gateway, it helps manage permissions
+# https://www.netlifycms.org/docs/authentication-backends/
+publish_mode: editorial_workflow
+
+# Where media will be stored
+media_folder: "public/images/uploads" # Media files will be stored here
+public_folder: "/images/uploads" # The files in the media folder are referenced at /images/uploads
+
+# Collections define the structure for the different content types
+collections:
+  - name: "blog" # Used in routes, e.g., /admin/collections/blog
+    label: "Blog Post" # Label for the collection in the editor UI
+    folder: "content/blog" # The path to the folder where the documents are stored
+    create: true # Allow users to create new documents in this collection
+    slug: "{{slug}}" # Filename template ({{slug}} = URL-friendly version of title)
+    fields: # The fields for each document
+      - {label: "Title", name: "title", widget: "string"}
+      - {label: "Meta Title", name: "metaTitle", widget: "string", required: false}
+      - {label: "Publish Date", name: "date", widget: "datetime"}
+      - {label: "Last Modified", name: "lastModified", widget: "datetime", required: false}
+      - {label: "Author", name: "authorName", widget: "string", default: "Admin User"}
+      - {label: "Banner Image", name: "bannerImage", widget: "image", required: false}
+      - {label: "Excerpt", name: "excerpt", widget: "text"}
+      - {label: "Meta Description", name: "metaDescription", widget: "text", required: false}
+      - {label: "Keywords", name: "keywords", widget: "list", required: false}
+      - {label: "Read Time (minutes)", name: "readTime", widget: "number", default: 5, value_type: "int", min: 1, max: 60}
+      - {label: "Published", name: "isPublished", widget: "boolean", default: true}
+      - {label: "Body", name: "content", widget: "markdown"}
