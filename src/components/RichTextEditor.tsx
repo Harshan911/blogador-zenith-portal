@@ -26,9 +26,10 @@ interface RichTextEditorProps {
   value: string;
   onChange: (content: string) => void;
   placeholder?: string;
+  height?: number;
 }
 
-const RichTextEditor = ({ value, onChange, placeholder = 'Write your content here...' }: RichTextEditorProps) => {
+const RichTextEditor = ({ value, onChange, placeholder = 'Write your content here...', height }: RichTextEditorProps) => {
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -161,7 +162,8 @@ const RichTextEditor = ({ value, onChange, placeholder = 'Write your content her
       
       <EditorContent 
         editor={editor} 
-        className="prose prose-sm max-w-none p-4 min-h-[400px] focus:outline-none"
+        className="prose prose-sm max-w-none p-4 focus:outline-none"
+        style={{ minHeight: height ? `${height}px` : '400px' }}
       />
     </div>
   );
