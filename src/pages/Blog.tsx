@@ -26,7 +26,8 @@ const Blog = () => {
                 title={post.title} 
                 excerpt={post.excerpt} 
                 date={post.date} 
-                slug={post.slug} 
+                slug={post.slug}
+                bannerImage={post.bannerImage}
               />
             ))}
           </div>
