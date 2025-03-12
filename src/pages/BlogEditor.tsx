@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from '../components/Header';
@@ -7,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Save, ArrowLeft, Eye, EyeOff, Link as LinkIcon, Image, Info } from 'lucide-react';
+import { Save, ArrowLeft, Eye, EyeOff, Link as LinkIcon, Image, Info, Upload } from 'lucide-react';
 import { BlogPost, getBlogPostBySlug, addBlogPost, updateBlogPost } from '../data/blogPosts';
 import RichTextEditor from '../components/RichTextEditor';
 import KeywordsInput from '../components/KeywordsInput';
@@ -32,14 +31,12 @@ const BlogEditor = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // Check if user is logged in
     const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
     if (!isLoggedIn) {
       navigate('/admin');
       return;
     }
 
-    // If editing, load post data
     if (isEditing && slug) {
       const post = getBlogPostBySlug(slug);
       if (post) {
@@ -64,13 +61,43 @@ const BlogEditor = () => {
     }
   }, [isEditing, slug, navigate, toast]);
 
+  const handleImageUpload = useCallback(async (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          resolve(reader.result);
+        } else {
+          reject(new Error('Failed to convert image to data URL'));
+        }
+      };
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+  }, []);
+
+  const handleBannerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const imageUrl = await handleImageUpload(file);
+        setBannerImage(imageUrl);
+      } catch (error) {
+        console.error('Failed to upload banner image:', error);
+        toast({
+          title: "Upload Failed",
+          description: "Could not upload the banner image. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // In a real app, this would be an API call to save the post
     setTimeout(() => {
-      // Create a new blog post object
       const blogPost: BlogPost = {
         title,
         metaTitle: metaTitle || title,
@@ -105,12 +132,10 @@ const BlogEditor = () => {
     }, 1000);
   };
 
-  // Calculate SEO score based on content
   const calculateSeoScore = useCallback(() => {
     let score = 0;
     let issues: string[] = [];
     
-    // Title length check (best between 50-60 characters)
     if (title.length >= 40 && title.length <= 60) {
       score += 20;
     } else if (title.length > 0) {
@@ -120,7 +145,6 @@ const BlogEditor = () => {
       issues.push("Title is missing");
     }
     
-    // Content length check (at least 300 words)
     const wordCount = content.split(/\s+/).filter(Boolean).length;
     if (wordCount >= 800) {
       score += 30;
@@ -134,7 +158,6 @@ const BlogEditor = () => {
       issues.push("Content is missing");
     }
     
-    // Meta description (excerpt)
     if (metaDescription.length >= 120 && metaDescription.length <= 160) {
       score += 15;
     } else if (metaDescription.length > 0) {
@@ -144,14 +167,12 @@ const BlogEditor = () => {
       issues.push("Meta description is missing");
     }
     
-    // Has image
     if (bannerImage) {
       score += 10;
     } else {
       issues.push("Banner image is missing");
     }
     
-    // Keywords
     if (keywords.length >= 3 && keywords.length <= 8) {
       score += 15;
     } else if (keywords.length > 0) {
@@ -161,7 +182,6 @@ const BlogEditor = () => {
       issues.push("Keywords are missing");
     }
     
-    // Check if primary keyword is in title and content
     if (keywords.length > 0) {
       const primaryKeyword = keywords[0];
       let titleContainsKeyword = false;
@@ -296,13 +316,39 @@ const BlogEditor = () => {
             </div>
             
             <div className="space-y-2">
-              <label htmlFor="bannerImage" className="text-sm font-medium">Banner Image URL</label>
-              <Input
-                id="bannerImage"
-                value={bannerImage}
-                onChange={(e) => setBannerImage(e.target.value)}
-                placeholder="https://example.com/image.jpg"
-              />
+              <label htmlFor="bannerImage" className="text-sm font-medium">Banner Image</label>
+              <div className="flex gap-2 items-center">
+                <div className="relative flex-1">
+                  <Input
+                    id="bannerImage"
+                    value={bannerImage}
+                    onChange={(e) => setBannerImage(e.target.value)}
+                    placeholder="https://example.com/image.jpg or upload an image"
+                    className="pr-10"
+                  />
+                  <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+                    <LinkIcon size={14} />
+                  </div>
+                </div>
+                <div className="relative">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    className="flex items-center gap-1"
+                    onClick={() => document.getElementById('banner-upload')?.click()}
+                  >
+                    <Upload size={16} />
+                    <span>Upload</span>
+                  </Button>
+                  <input
+                    id="banner-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleBannerUpload}
+                  />
+                </div>
+              </div>
               {bannerImage && (
                 <div className="mt-2 rounded-md overflow-hidden h-40">
                   <img 
@@ -333,6 +379,7 @@ const BlogEditor = () => {
                   value={content} 
                   onChange={setContent} 
                   height={500}
+                  onImageUpload={handleImageUpload}
                 />
               </div>
             </div>
