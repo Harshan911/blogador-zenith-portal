@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -13,7 +14,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 247 91% 17%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 40% 96.1%;
@@ -35,19 +36,12 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -96,6 +90,26 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-white text-foreground;
   }
+}
+
+.loansavail-gradient {
+  background: #080453;
+}
+
+.loansavail-card {
+  @apply bg-white border border-gray-200 rounded-lg shadow hover:shadow-md transition-shadow;
+}
+
+.apply-now-button {
+  @apply bg-white text-loansavail-navy font-bold px-6 py-2 rounded-full hover:bg-gray-100 transition-colors;
+}
+
+.feature-item {
+  @apply flex items-center gap-2 mb-2;
+}
+
+.checked-icon {
+  @apply text-green-500 font-bold;
 }

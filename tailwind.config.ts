@@ -49,6 +49,12 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        loansavail: {
+          navy: "#080453",
+          darknavy: "#05022E",
+          white: "#FFFFFF",
+          accent: "#4F46E5",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -85,6 +91,7 @@ export default {
       },
       fontFamily: {
         sans: ["var(--font-sans)", ...fontFamily.sans],
+        cursive: ["cursive", ...fontFamily.sans],
       },
       keyframes: {
         "accordion-down": {

@@ -13,7 +13,7 @@ interface BlogCardProps {
 
 const BlogCard: React.FC<BlogCardProps> = ({ title, excerpt, date, slug, bannerImage }) => {
   return (
-    <Card className="hover:shadow-lg transition-shadow flex flex-col h-full">
+    <Card className="bg-loansavail-navy text-white border-0 rounded-lg overflow-hidden hover:shadow-lg transition-shadow flex flex-col h-full">
       {bannerImage && (
         <div className="relative w-full pt-[56.25%] overflow-hidden">
           <img 
@@ -23,16 +23,18 @@ const BlogCard: React.FC<BlogCardProps> = ({ title, excerpt, date, slug, bannerI
           />
         </div>
       )}
-      <CardHeader>
-        <CardTitle className="text-xl font-semibold text-primary">
-          <Link to={`/blog/${slug}`}>{title}</Link>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-xl font-semibold text-white">
+          <Link to={`/blog/${slug}`} className="hover:text-gray-200 transition-colors">{title}</Link>
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-grow">
-        <p className="text-gray-600">{excerpt}</p>
+      <CardContent className="flex-grow pb-2">
+        <p className="text-gray-300">{excerpt}</p>
       </CardContent>
-      <CardFooter className="text-sm text-gray-500">
-        {new Date(date).toLocaleDateString()}
+      <CardFooter className="text-sm text-gray-400 pt-0">
+        <div className="bg-white/20 text-white px-2 py-1 rounded text-xs">
+          {new Date(date).toLocaleDateString()}
+        </div>
       </CardFooter>
     </Card>
   );
