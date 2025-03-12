@@ -1,5 +1,8 @@
+import pool from '../utils/dbConfig';
+import { RowDataPacket, ResultSetHeader } from 'mysql2';
 
 export interface BlogPost {
+  id?: number;
   title: string;
   excerpt: string;
   content: string;
@@ -15,8 +18,8 @@ export interface BlogPost {
   lastModified?: string;
 }
 
-// Sample blog posts data
-export const blogPosts: BlogPost[] = [
+// Sample blog posts data for fallback/development
+const sampleBlogPosts: BlogPost[] = [
   {
     title: "Getting Started with React",
     excerpt: "Learn the basics of React and start building modern web applications.",
@@ -46,52 +49,172 @@ export const blogPosts: BlogPost[] = [
 ];
 
 // Function to get all blog posts
-export const getAllBlogPosts = (): BlogPost[] => {
-  return blogPosts;
+export const getAllBlogPosts = async (): Promise<BlogPost[]> => {
+  try {
+    const [rows] = await pool.query<RowDataPacket[]>(
+      'SELECT * FROM blog_posts ORDER BY date DESC'
+    );
+    
+    return rows.map(row => ({
+      ...row,
+      keywords: row.keywords ? JSON.parse(row.keywords) : []
+    }));
+  } catch (error) {
+    console.error('Error fetching blog posts:', error);
+    // Fallback to sample data when database is not available
+    return sampleBlogPosts;
+  }
 };
 
 // Function to get a blog post by slug
-export const getBlogPostBySlug = (slug: string): BlogPost | undefined => {
-  return blogPosts.find(post => post.slug === slug);
+export const getBlogPostBySlug = async (slug: string): Promise<BlogPost | undefined> => {
+  try {
+    const [rows] = await pool.query<RowDataPacket[]>(
+      'SELECT * FROM blog_posts WHERE slug = ?',
+      [slug]
+    );
+    
+    if (rows.length === 0) {
+      return undefined;
+    }
+    
+    const post = rows[0];
+    return {
+      ...post,
+      keywords: post.keywords ? JSON.parse(post.keywords) : []
+    };
+  } catch (error) {
+    console.error(`Error fetching blog post with slug ${slug}:`, error);
+    // Fallback to sample data when database is not available
+    return sampleBlogPosts.find(post => post.slug === slug);
+  }
 };
 
-// New helper functions for blog management
-
 // Function to add a new blog post
-export const addBlogPost = (post: BlogPost): void => {
-  blogPosts.unshift(post);
+export const addBlogPost = async (post: BlogPost): Promise<void> => {
+  try {
+    // Prepare keywords for storage
+    const keywordsJson = post.keywords ? JSON.stringify(post.keywords) : null;
+    
+    await pool.query(
+      `INSERT INTO blog_posts 
+       (title, excerpt, content, date, slug, readTime, bannerImage, keywords, 
+        authorName, metaTitle, metaDescription, isPublished, lastModified) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        post.title,
+        post.excerpt,
+        post.content,
+        post.date,
+        post.slug,
+        post.readTime,
+        post.bannerImage || null,
+        keywordsJson,
+        post.authorName || 'Admin User',
+        post.metaTitle || post.title,
+        post.metaDescription || post.excerpt,
+        post.isPublished !== undefined ? post.isPublished : true,
+        post.lastModified || post.date
+      ]
+    );
+  } catch (error) {
+    console.error('Error adding blog post:', error);
+    // For fallback behavior, add to sample array if database operation fails
+    sampleBlogPosts.unshift(post);
+    throw new Error('Failed to add blog post to database');
+  }
 };
 
 // Function to update an existing blog post
-export const updateBlogPost = (updatedPost: BlogPost): boolean => {
-  const index = blogPosts.findIndex(post => post.slug === updatedPost.slug);
-  if (index !== -1) {
-    blogPosts[index] = {
-      ...updatedPost,
-      lastModified: new Date().toISOString().split('T')[0]
-    };
-    return true;
+export const updateBlogPost = async (updatedPost: BlogPost): Promise<boolean> => {
+  try {
+    // Prepare keywords for storage
+    const keywordsJson = updatedPost.keywords ? JSON.stringify(updatedPost.keywords) : null;
+    
+    const [result] = await pool.query<ResultSetHeader>(
+      `UPDATE blog_posts 
+       SET title = ?, excerpt = ?, content = ?, readTime = ?, bannerImage = ?, 
+           keywords = ?, authorName = ?, metaTitle = ?, metaDescription = ?, 
+           isPublished = ?, lastModified = ? 
+       WHERE slug = ?`,
+      [
+        updatedPost.title,
+        updatedPost.excerpt,
+        updatedPost.content,
+        updatedPost.readTime,
+        updatedPost.bannerImage || null,
+        keywordsJson,
+        updatedPost.authorName || 'Admin User',
+        updatedPost.metaTitle || updatedPost.title,
+        updatedPost.metaDescription || updatedPost.excerpt,
+        updatedPost.isPublished !== undefined ? updatedPost.isPublished : true,
+        new Date().toISOString().split('T')[0],
+        updatedPost.slug
+      ]
+    );
+    
+    return result.affectedRows > 0;
+  } catch (error) {
+    console.error('Error updating blog post:', error);
+    // For fallback behavior, update sample array if database operation fails
+    const index = sampleBlogPosts.findIndex(post => post.slug === updatedPost.slug);
+    if (index !== -1) {
+      sampleBlogPosts[index] = {
+        ...updatedPost,
+        lastModified: new Date().toISOString().split('T')[0]
+      };
+      return true;
+    }
+    return false;
   }
-  return false;
 };
 
 // Function to delete a blog post
-export const deleteBlogPost = (slug: string): boolean => {
-  const index = blogPosts.findIndex(post => post.slug === slug);
-  if (index !== -1) {
-    blogPosts.splice(index, 1);
-    return true;
+export const deleteBlogPost = async (slug: string): Promise<boolean> => {
+  try {
+    const [result] = await pool.query<ResultSetHeader>(
+      'DELETE FROM blog_posts WHERE slug = ?',
+      [slug]
+    );
+    
+    return result.affectedRows > 0;
+  } catch (error) {
+    console.error('Error deleting blog post:', error);
+    // For fallback behavior, delete from sample array if database operation fails
+    const index = sampleBlogPosts.findIndex(post => post.slug === slug);
+    if (index !== -1) {
+      sampleBlogPosts.splice(index, 1);
+      return true;
+    }
+    return false;
   }
-  return false;
 };
 
 // Function to search blog posts
-export const searchBlogPosts = (query: string): BlogPost[] => {
-  const lowerCaseQuery = query.toLowerCase();
-  return blogPosts.filter(post => 
-    post.title.toLowerCase().includes(lowerCaseQuery) || 
-    post.content.toLowerCase().includes(lowerCaseQuery) ||
-    post.excerpt.toLowerCase().includes(lowerCaseQuery) ||
-    post.keywords?.some(keyword => keyword.toLowerCase().includes(lowerCaseQuery))
-  );
+export const searchBlogPosts = async (query: string): Promise<BlogPost[]> => {
+  try {
+    const searchQuery = `%${query}%`;
+    
+    const [rows] = await pool.query<RowDataPacket[]>(
+      `SELECT * FROM blog_posts 
+       WHERE title LIKE ? OR content LIKE ? OR excerpt LIKE ? OR keywords LIKE ?
+       ORDER BY date DESC`,
+      [searchQuery, searchQuery, searchQuery, searchQuery]
+    );
+    
+    return rows.map(row => ({
+      ...row,
+      keywords: row.keywords ? JSON.parse(row.keywords) : []
+    }));
+  } catch (error) {
+    console.error('Error searching blog posts:', error);
+    // Fallback to searching sample data
+    const lowerCaseQuery = query.toLowerCase();
+    return sampleBlogPosts.filter(post => 
+      post.title.toLowerCase().includes(lowerCaseQuery) || 
+      post.content.toLowerCase().includes(lowerCaseQuery) ||
+      post.excerpt.toLowerCase().includes(lowerCaseQuery) ||
+      post.keywords?.some(keyword => keyword.toLowerCase().includes(lowerCaseQuery))
+    );
+  }
 };
